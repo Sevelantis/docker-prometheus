@@ -1,0 +1,50 @@
+version: '3.6'
+
+services: 
+
+    grafana:
+        container_name: grafana
+        image: grafana/grafana
+        volumes: 
+            - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+            - ./grafana/data:/var/lib/grafana
+        ports:
+            - '3000:3000'
+        user: root
+        restart: always
+        depends_on:
+          - prometheus
+
+    node-exporter:
+        container_name: node-exporter
+        image: prom/node-exporter:latest
+        ports:
+            - '9100:9100'
+        volumes:
+            - /proc:/host/proc:ro
+            - /sys:/host/sys:ro
+            - /:/rootfs:ro
+        command:
+            - '--path.procfs=/host/proc'
+            - '--path.rootfs=/rootfs'
+            - '--path.sysfs=/host/sys'
+            - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+        restart: always
+
+    prometheus:
+        container_name: prometheus
+        image: prom/prometheus:latest
+        ports:
+            - '9090:9090'
+        volumes:
+            - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./prometheus/prometheus_data:/prometheus
+        command:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--web.console.libraries=/etc/prometheus/console_libraries'
+            - '--web.console.templates=/etc/prometheus/consoles'
+            - '--web.enable-lifecycle'
+        restart: always
+        user: root
+
